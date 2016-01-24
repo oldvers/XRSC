@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/XRSC.iml" filepath="$PROJECT_DIR$/XRSC.iml" />
+      <module fileurl="file://$PROJECT_DIR$/XRSC_v02.iml" filepath="$PROJECT_DIR$/XRSC_v02.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

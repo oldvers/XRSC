@@ -6,6 +6,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,90 +14,37 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
-  private EditText  mServer;
-  private Switch    mClientSwitch;
-  private Button    mSign1;
-  private Button    mSign2;
-  private TCPClient mTcpClient;
+  private String       mTag           = "MainThread";
+  private EditText     mServer;
+  private Switch       mClientSwitch;
+  private TextView     mStatusText;
+  private Button       mSign1;
+  private Button       mSign2;
+  private TCPClient    mTcpClient     = null;
+  private aClientTask  mClientTask    = null;
 
   private final String aPicture =
-            "4992244992244992" +
-            "2449922449922449" +
-            "9224D9B66DDB0600" +
-            "00000000000000B0" +
-            "6DDBB62D19000000" +
-            "0000000000000000" +
-            "00000000002C1900" +
-            "0000000000000000" +
-            "000000000000002C" +
-            "1900000000000000" +
-            "0000000000000000" +
-            "002C190000000000" +
-            "0000020001000000" +
-            "0000002C1900D8B6" +
-            "0D00000010200000" +
-            "0060DB36002C1900" +
-            "18000C0000008004" +
-            "000000600030002C" +
-            "190018000C000000" +
-            "8004000000600030" +
-            "002C1900D8B60D00" +
-            "0000102000000060" +
-            "DB36002C19000000" +
-            "0000000002000100" +
-            "00000000002C1900" +
-            "0000000000000000" +
-            "000000000000002C" +
-            "0100000000499200" +
-            "0000004992000000" +
-            "0020010000000001" +
-            "8000000000018000" +
-            "0000002001000000" +
-            "0001800000000001" +
-            "8000000000200100" +
-            "0000000180000000" +
-            "0001800000000020" +
-            "0100000000018000" +
-            "0000000180000000" +
-            "0020010000000001" +
-            "8000000000018000" +
-            "0000002001000000" +
-            "0001800000000001" +
-            "8000000000200100" +
-            "0000004992000000" +
-            "0049920000000020" +
-            "1900000000000000" +
-            "0000000000000000" +
-            "002C190010000100" +
-            "0000020001000000" +
-            "0220002C19008020" +
-            "0000000010200000" +
-            "00001004002C1900" +
-            "0004000000008004" +
-            "000000008000002C" +
-            "1900802000000000" +
-            "8004000000001004" +
-            "002C190010000100" +
-            "0000102000000000" +
-            "0220002C19000000" +
-            "0000000002000100" +
-            "00000000002C1900" +
-            "0000000000000000" +
-            "000000000000002C" +
-            "1900000000000000" +
-            "0000000000000000" +
-            "002C190000000000" +
-            "0000000000000000" +
-            "0000002CD9B66DDB" +
-            "0600000000000000" +
-            "00B06DDBB62D4992" +
-            "2449922449922449" +
-            "9224499224499224";
+            "SHOW_IMG->100:000000000000009024490200000000000000D8B66D03000048F2FFFF9F04000060DBB" +
+            "60D000000000020F99F2449F23F010000000000D8B66D0300E44F92244992E40F0060DBB60D00000000" +
+            "803C4992FC7F9224790000000000D8B66D03902749FEFFFFFF24C90360DBB60D00000000F224F9FFFFF" +
+            "FFF3F491E00000000D8B66D439E24FFFFFFFFFFFF49F260DBB60D000000409EE4FFFFFFFFFFFF4FF200" +
+            "000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF7F920700000000000" +
+            "07992FF3F00E03F00FCFF933C0000000000007992FF0700E00700E0FF933C0000000000007992FF07FE" +
+            "FF077EE0FF933C00000000000079F2FF0780FF077EE0FF9F3C00000000000079F2FF0700E0077EE0FF9" +
+            "F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000" +
+            "000079F2FF077EE0077EE0FF9F3C0000000000007992FF0700E00700E0FF933C0000000000007992FF3" +
+            "F00FC3F00FCFF933C000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF" +
+            "7F9207000000000000409EE4FFFFFFFFFFFF4FF200000000000000409E24FFFFFFFFFFFF49F20000000" +
+            "000000000F224F9FFFFFFFF3F491E00000000000000009027C9FFFFFFFF27C903000000000000000080" +
+            "3C4992FFFF93247900000000000000000000E44F92244992E40F0000000000000000000020F99324499" +
+            "23F01000000000000000000000048FEFFFFFF0400000000000000000000000000922449120000000000" +
+            "0000$2FFE";
 
 
   @Override
@@ -121,53 +69,86 @@ public class MainActivity extends AppCompatActivity
 
     mServer       = (EditText)findViewById(R.id.idServer);
     mClientSwitch = (Switch)findViewById(R.id.idClientSwitch);
+    mStatusText   = (TextView)findViewById(R.id.idStatusText);
     mSign1        = (Button)findViewById(R.id.idSendButton1);
     mSign2        = (Button)findViewById(R.id.idSendButton2);
 
-    //mServer.clearFocus();
+    // Hide Keyboard
     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-
-    // Connect to the server
-    new aClientTask().execute("");
   }
 
-  public void Sign1OnClickListener(View view)
+  public void onClickListenerSendButton1(View view)
   {
     String message = "Hallo Guys!!!";
 
-    //sends the message to the server
+    // Sends the message to the server
     if (mTcpClient != null)
     {
       mTcpClient.sendMessage(message);
     }
   }
 
-  public void Sign2OnClickListener(View view)
+  public void onClickListenerSendButton2(View view)
   {
-    //sends the message to the server
+    // Sends the message to the server
     if (mTcpClient != null)
     {
       mTcpClient.sendMessage(aPicture);
     }
   }
 
+  public void onClickListenerClientSwitch(View view)
+  {
+    if (mClientSwitch.isChecked())
+    {
+      Log.d(mTag, "ClientSwitch chesked ON");
+      mClientTask = new aClientTask();
+      mClientTask.execute("");
+    }
+    else
+    {
+      Log.d(mTag, "ClientSwitch chesked OFF");
+
+      mTcpClient.stop();
+    }
+  }
+
   public class aClientTask extends AsyncTask <String, String, TCPClient>
   {
+    private String cTag    = "ClientTask";
+    private String cServer = null;
+
     @Override
     protected TCPClient doInBackground(String... message)
     {
+      publishProgress("Connection...");
+
       // We create a TCPClient object and
-      mTcpClient = new TCPClient(new TCPClient.OnMessageReceived()
+      mTcpClient = new TCPClient(cServer, new TCPClient.OnMessageReceived()
       {
         @Override
-        //here the messageReceived method is implemented
+        // Here the messageReceived method is implemented
         public void messageReceived(String message)
         {
-          //this method calls the onProgressUpdate
+          // This method calls the onProgressUpdate
           publishProgress(message);
         }
       });
       mTcpClient.run();
+
+//      while (!this.isCancelled())
+//      {
+//        Log.d(tag, "Do In Background...");
+//
+//        try
+//        {
+//          Thread.sleep(1000);
+//        }
+//        catch (Exception e)
+//        {
+//          //
+//        }
+//      }
 
       return null;
     }
@@ -177,17 +158,32 @@ public class MainActivity extends AppCompatActivity
     {
       super.onProgressUpdate(values);
 
-      //in the arrayList we add the messaged received from server
-      //arrayList.add(values[0]);
-      // notify the adapter that the data set has changed. This means that new message received
-      // from server was added to the list
-      //mAdapter.notifyDataSetChanged();
+      Log.d(cTag, "Do On Progress");
+
+      mStatusText.setText(values[0]);
     }
 
     @Override
     protected void onPreExecute()
     {
       super.onPreExecute();
+
+      cServer = mServer.getText().toString();
+
+      Log.d(cTag, "Do Pre Execute : Server = " + cServer);
+    }
+
+    @Override
+    protected void onCancelled()
+    {
+      super.onCancelled();
+
+      Log.d(cTag, "Do On Cancelled");
+
+      mTcpClient = null;
+      mClientTask = null;
+      mClientSwitch.setChecked(false);
+      mStatusText.setText("Not connected");
     }
 
     @Override
@@ -195,7 +191,12 @@ public class MainActivity extends AppCompatActivity
     {
       super.onPostExecute(tcpClient);
 
-      if(tcpClient == null) mClientSwitch.setChecked(false);
+      Log.d(cTag, "Do Post Execute");
+
+      mTcpClient = null;
+      mClientTask = null;
+      mClientSwitch.setChecked(false);
+      mStatusText.setText("Not connected");
     }
   }
 
@@ -215,7 +216,7 @@ public class MainActivity extends AppCompatActivity
     // as you specify a parent activity in AndroidManifest.xml.
     int id = item.getItemId();
 
-    //noinspection SimplifiableIfStatement
+    // Noinspection SimplifiableIfStatement
     if(id == R.id.action_settings)
     {
       return true;

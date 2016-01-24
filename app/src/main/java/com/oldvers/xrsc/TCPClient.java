@@ -8,25 +8,30 @@ import android.util.Log;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 public class TCPClient
 {
-  private String serverMessage;
-  public static final String SERVERIP = "192.168.4.1";
-  public static final int SERVERPORT = 333;
-  private OnMessageReceived mMessageListener = null;
-  private boolean mRun = false;
+  private String             mServerMessage;
+  private String             mServer          = "192.168.4.1";;
+  public static final int    mServerPort      = 333;
+  private OnMessageReceived  mMessageListener = null;
+  private boolean            mRun             = false;
 
-  PrintWriter out;
-  BufferedReader in;
+  private PrintWriter        mOS;
+  private BufferedReader     mIS;
 
   /**
    *  Constructor of the class. OnMessagedReceived listens for the messages received from server
    */
-  public TCPClient(OnMessageReceived listener)
+  public TCPClient(String aServer, OnMessageReceived aListener)
   {
-    mMessageListener = listener;
+    mServer = aServer;
+    mMessageListener = aListener;
   }
 
   /**
@@ -35,16 +40,22 @@ public class TCPClient
    */
   public void sendMessage(String message)
   {
-    if (out != null && !out.checkError())
+    Log.d("TCP Client", "Sending message");
+
+    if (mOS != null && !mOS.checkError())
     {
-      out.println(message);
-      out.flush();
+      mOS.println(message);
+      mOS.flush();
+
+      Log.d("TCP Client", "Message sent");
     }
   }
 
-  public void stopClient()
+  public void stop()
   {
     mRun = false;
+
+    Log.d("TCP Client", "Stop");
   }
 
   public void run()
@@ -53,58 +64,91 @@ public class TCPClient
 
     try
     {
-      //here you must put your computer's IP address.
-      InetAddress serverAddr = InetAddress.getByName(SERVERIP);
+      // Here you must put your computer's IP address.
+      InetAddress mServerAddr = InetAddress.getByName(mServer);
+      //InetAddress addr = InetAddress.getByName("javacodegeeks.com");
 
-      Log.e("TCP Client", "C: Connecting...");
+      SocketAddress mSocketAddr = new InetSocketAddress(mServerAddr, mServerPort);
 
-      //create a socket to make the connection with the server
-      Socket socket = new Socket(serverAddr, SERVERPORT);
+      // Creates an unconnected socket
+      Socket mSocket = new Socket();
+
+      int mConnectTimeout = 3000;   // 3000 millis = 3 seconds
+
+      Log.d("TCP Client", "Connecting...");
+
+      // Connects this socket to the server with a specified timeout value
+      // If timeout occurs, SocketTimeoutException is thrown
+      mSocket.connect(mSocketAddr, mConnectTimeout);
+
+      Log.d("TCP Client", "Connected..." + mSocket);
+
+      // Create a socket to make the connection with the server
+      //Socket mSocket = new Socket(mServerAddr, mServerPort);
+
+      Log.d("TCP Client", "Setting Timeout to 200 ms");
+
+      if (mMessageListener != null)
+      {
+        mMessageListener.messageReceived("Connected");
+      }
+
+      mSocket.setSoTimeout(200);
 
       try
       {
-        //send the message to the server
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+        // Send the message to the server
+        mOS = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream())), true);
 
-        Log.e("TCP Client", "C: Sent.");
-
-        Log.e("TCP Client", "C: Done.");
-
-        //receive the message which the server sends back
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        // Receive the message which the server sends back
+        mIS = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
 
         //in this while the client listens for the messages sent by the server
         while (mRun)
         {
-          serverMessage = in.readLine();
-
-          if (serverMessage != null && mMessageListener != null)
+          try
           {
-            //call the method messageReceived from MyActivity class
-            mMessageListener.messageReceived(serverMessage);
+            Log.d("TCP Client", "Reading...");
+
+            mServerMessage = mIS.readLine();
           }
-          serverMessage = null;
+          catch (Exception e)
+          {
+            Log.d("TCP Client", "Reading Timeout occured.");
+          }
 
+          if (mServerMessage != null && mMessageListener != null)
+          {
+            // Call the method messageReceived from MyActivity class
+            mMessageListener.messageReceived(mServerMessage);
+
+            Log.d("TCP Client", "Received Message: '" + mServerMessage + "'");
+          }
+          mServerMessage = null;
         }
-
-        Log.e("RESPONSE FROM SERVER", "S: Received Message: '" + serverMessage + "'");
-
       }
       catch (Exception e)
       {
-        Log.e("TCP", "S: Error", e);
+        Log.e("TCP Client", "Error", e);
       }
       finally
       {
         //the socket must be closed. It is not possible to reconnect to this socket
         // after it is closed, which means a new socket instance has to be created.
-        socket.close();
+        mSocket.close();
       }
-
+    }
+    catch (SocketTimeoutException e)
+    {
+      Log.e("TCP Client", "Connection timeout occured: " + e.getMessage());
+    }
+    catch (UnknownHostException e)
+    {
+      Log.e("TCP Client", "Host not found: " + e.getMessage());
     }
     catch (Exception e)
     {
-      Log.e("TCP", "C: Error", e);
+      Log.e("TCP Client", "Error", e);
     }
   }
 

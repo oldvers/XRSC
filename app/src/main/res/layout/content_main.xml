@@ -30,7 +30,7 @@
             android:inputType="text"
             android:layout_alignParentStart="true"
             android:layout_alignWithParentIfMissing="false"
-            android:text="192.168.4.1"
+            android:text="@string/defaultServer"
             android:layout_toStartOf="@+id/idClientSwitch"
             android:layout_marginRight="20dp"
             android:layout_centerVertical="true"/>
@@ -42,10 +42,11 @@
             android:gravity="center"
             android:layout_alignParentEnd="true"
             android:enabled="true"
-            android:checked="true"
+            android:checked="false"
             android:layout_centerVertical="true"
             android:textOn="ON"
-            android:textOff="OFF"/>
+            android:textOff="OFF"
+            android:onClick="onClickListenerClientSwitch"/>
 
     </RelativeLayout>
 
@@ -59,12 +60,21 @@
         android:padding="5dp"
         android:id="@+id/idLinearLayout">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/textStatusDefault"
+            android:id="@+id/idStatusText"
+            android:layout_gravity="top|center_horizontal"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="20dp"/>
+
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Send Text String"
+            android:text="@string/textSendButton1"
             android:id="@+id/idSendButton1"
-            android:onClick="Sign1OnClickListener"
+            android:onClick="onClickListenerSendButton1"
             android:layout_gravity="top"
             android:textAlignment="center"
             android:focusable="false"
@@ -73,9 +83,9 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Send Image as String"
+            android:text="@string/textSendButton2"
             android:id="@+id/idSendButton2"
-            android:onClick="Sign2OnClickListener"
+            android:onClick="onClickListenerSendButton2"
             />
 
         <AnalogClock
