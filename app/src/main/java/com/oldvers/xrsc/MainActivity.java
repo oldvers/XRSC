@@ -1,5 +1,7 @@
 package com.oldvers.xrsc;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -12,39 +14,45 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
-  private String       mTag           = "MainThread";
-  private EditText     mServer;
-  private Switch       mClientSwitch;
-  private TextView     mStatusText;
-  private Button       mSign1;
-  private Button       mSign2;
-  private TCPClient    mTcpClient     = null;
-  private aClientTask  mClientTask    = null;
+  private String      mTag           = "MainThread";
+  private EditText    mServer;
+  private Switch      mClientSwitch;
+  private TextView    mStatusText;
+  private Button      mSend;
+  private ImageView   mImageView;
+  private Bitmap      mBitmap        = null;
+  private SeekBar     mBrightness;
+  private TCPClient   mTcpClient     = null;
+  private aClientTask mClientTask    = null;
 
   private final String aPicture =
-            "SHOW_IMG->100:000000000000009024490200000000000000D8B66D03000048F2FFFF9F04000060DBB" +
-            "60D000000000020F99F2449F23F010000000000D8B66D0300E44F92244992E40F0060DBB60D00000000" +
-            "803C4992FC7F9224790000000000D8B66D03902749FEFFFFFF24C90360DBB60D00000000F224F9FFFFF" +
-            "FFF3F491E00000000D8B66D439E24FFFFFFFFFFFF49F260DBB60D000000409EE4FFFFFFFFFFFF4FF200" +
-            "000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF7F920700000000000" +
-            "07992FF3F00E03F00FCFF933C0000000000007992FF0700E00700E0FF933C0000000000007992FF07FE" +
-            "FF077EE0FF933C00000000000079F2FF0780FF077EE0FF9F3C00000000000079F2FF0700E0077EE0FF9" +
-            "F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000" +
-            "000079F2FF077EE0077EE0FF9F3C0000000000007992FF0700E00700E0FF933C0000000000007992FF3" +
-            "F00FC3F00FCFF933C000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF" +
-            "7F9207000000000000409EE4FFFFFFFFFFFF4FF200000000000000409E24FFFFFFFFFFFF49F20000000" +
-            "000000000F224F9FFFFFFFF3F491E00000000000000009027C9FFFFFFFF27C903000000000000000080" +
-            "3C4992FFFF93247900000000000000000000E44F92244992E40F0000000000000000000020F99324499" +
-            "23F01000000000000000000000048FEFFFFFF0400000000000000000000000000922449120000000000" +
-            "0000$2FFE";
+          "SHOW_IMG->100:000000000000009024490200000000000000D8B66D03000048F2FFFF9F04000060DBB" +
+                  "60D000000000020F99F2449F23F010000000000D8B66D0300E44F92244992E40F0060DBB60D00000000" +
+                  "803C4992FC7F9224790000000000D8B66D03902749FEFFFFFF24C90360DBB60D00000000F224F9FFFFF" +
+                  "FFF3F491E00000000D8B66D439E24FFFFFFFFFFFF49F260DBB60D000000409EE4FFFFFFFFFFFF4FF200" +
+                  "000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF7F920700000000000" +
+                  "07992FF3F00E03F00FCFF933C0000000000007992FF0700E00700E0FF933C0000000000007992FF07FE" +
+                  "FF077EE0FF933C00000000000079F2FF0780FF077EE0FF9F3C00000000000079F2FF0700E0077EE0FF9" +
+                  "F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000" +
+                  "000079F2FF077EE0077EE0FF9F3C0000000000007992FF0700E00700E0FF933C0000000000007992FF3" +
+                  "F00FC3F00FCFF933C000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF" +
+                  "7F9207000000000000409EE4FFFFFFFFFFFF4FF200000000000000409E24FFFFFFFFFFFF49F20000000" +
+                  "000000000F224F9FFFFFFFF3F491E00000000000000009027C9FFFFFFFF27C903000000000000000080" +
+                  "3C4992FFFF93247900000000000000000000E44F92244992E40F0000000000000000000020F99324499" +
+                  "23F01000000000000000000000048FEFFFFFF0400000000000000000000000000922449120000000000" +
+                  "0000$2FFE";
 
 
   @Override
@@ -67,39 +75,48 @@ public class MainActivity extends AppCompatActivity
       }
     });
 
-    mServer       = (EditText)findViewById(R.id.idServer);
-    mClientSwitch = (Switch)findViewById(R.id.idClientSwitch);
-    mStatusText   = (TextView)findViewById(R.id.idStatusText);
-    mSign1        = (Button)findViewById(R.id.idSendButton1);
-    mSign2        = (Button)findViewById(R.id.idSendButton2);
+    mServer = (EditText) findViewById(R.id.idServer);
+    mClientSwitch = (Switch) findViewById(R.id.idClientSwitch);
+    mStatusText = (TextView) findViewById(R.id.idStatusText);
+    mSend = (Button) findViewById(R.id.idSendButton);
+    mImageView = (ImageView) findViewById(R.id.idImageView);
+    mBrightness = (SeekBar) findViewById(R.id.idSeekBar);
+    mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign);
+
+    mClientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+      {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+        {
+          manageConnection();
+        }
+      });
+
+    /*mClientSwitch.setOnClickListener(new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View view)
+      {
+        manageConnection();
+      }
+    });*/
 
     // Hide Keyboard
     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
   }
 
-  public void onClickListenerSendButton1(View view)
+  public void onClickListenerSendButton(View view)
   {
-    String message = "Hallo Guys!!!";
-
     // Sends the message to the server
-    if (mTcpClient != null)
+    if(mTcpClient != null)
     {
-      mTcpClient.sendMessage(message);
+      mTcpClient.sendMessage(formatPacket(packBitmap()));
     }
   }
 
-  public void onClickListenerSendButton2(View view)
+  public void manageConnection()
   {
-    // Sends the message to the server
-    if (mTcpClient != null)
-    {
-      mTcpClient.sendMessage(aPicture);
-    }
-  }
-
-  public void onClickListenerClientSwitch(View view)
-  {
-    if (mClientSwitch.isChecked())
+    if(mClientSwitch.isChecked())
     {
       Log.d(mTag, "ClientSwitch chesked ON");
       mClientTask = new aClientTask();
@@ -109,13 +126,13 @@ public class MainActivity extends AppCompatActivity
     {
       Log.d(mTag, "ClientSwitch chesked OFF");
 
-      mTcpClient.stop();
+      if (mTcpClient != null) mTcpClient.stop();
     }
   }
 
-  public class aClientTask extends AsyncTask <String, String, TCPClient>
+  public class aClientTask extends AsyncTask<String, String, TCPClient>
   {
-    private String cTag    = "ClientTask";
+    private String cTag = "ClientTask";
     private String cServer = null;
 
     @Override
@@ -223,5 +240,127 @@ public class MainActivity extends AppCompatActivity
     }
 
     return super.onOptionsItemSelected(item);
+  }
+
+
+  /************************************************************************************************/
+  /* Working with Image */
+  /************************************************************************************************/
+
+  private byte[] packBitmap()
+  {
+    if (mBitmap == null) return null;
+
+    int x, y, bi, ba, v, c, color;
+    int size = mBitmap.getWidth() * mBitmap.getHeight() * 3;
+
+    if (size % 8 != 0)
+    {
+      size = size / 8 + 1;
+    }
+    else
+    {
+      size = size / 8;
+    }
+
+    byte[] pb = new byte[size];
+
+    bi = 0;
+    ba = 0;
+    v = 0;
+
+    for (y = 0; y < mBitmap.getHeight(); y++)
+    {
+      for(x = 0; x < mBitmap.getWidth(); x++)
+      {
+        for(c = 0; c < 3; c++)
+        {
+          color = mBitmap.getPixel(x, y) & (0xFF << ((2 - c) * 8));
+
+          if(color != 0)
+          {
+            ba = ba | 0x80;
+          }
+
+          if(bi % 8 == 7)
+          {
+            pb[v] = (byte)(ba & 0xFF);
+            ba = 0;
+            v++;
+          }
+
+          bi++;
+          ba = ba >> 1;
+        }
+      }
+    }
+
+    return pb;
+  }
+
+  private String formatPacket(byte[] aPackedBitmap)
+  {
+    StringBuilder packet = new StringBuilder("");
+
+    final String HexSymbols = "0123456789ABCDEF";
+    int i, CRC;
+
+    //SHOW_IMG->100:aabbb..............bbaa\r
+
+    if (aPackedBitmap == null) return null;
+
+    packet.append("SHOW_IMG->");
+    packet.append(mBrightness.getProgress());
+    packet.append(":");
+
+    CRC = 0;
+    for (i = 0; i < packet.toString().length(); i++)
+      CRC += (int)packet.toString().charAt(i);
+
+    for (i = 0; i < aPackedBitmap.length; i++)
+    {
+      packet.append(HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F)));
+      CRC += (int)HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F));
+      packet.append(HexSymbols.charAt(aPackedBitmap[i] & 0x0F));
+      CRC += (int)HexSymbols.charAt(aPackedBitmap[i] & 0x0F);
+    }
+
+    packet.append("$");
+    CRC += (int)'$';
+
+    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+    packet.append(HexSymbols.charAt((CRC & 0x0F)));
+    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
+
+    return packet.toString();
+  }
+
+  private class OpenBitmapListener implements OpenFileDialog.OpenDialogListener
+  {
+    @Override
+    public void OnSelectedFile(String aFileName)
+    {
+      BitmapFactory.Options mOptions = new BitmapFactory.Options();
+      mOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+      mBitmap = BitmapFactory.decodeFile(aFileName, mOptions);
+
+      if ((mBitmap.getWidth() != 48) || (mBitmap.getHeight() != 32))
+      {
+        Toast.makeText(getApplicationContext(), "Wrond Image Dimentions!", Toast.LENGTH_LONG).show();
+      }
+      else
+      {
+        mImageView.setImageBitmap(mBitmap);
+      }
+    }
+  }
+
+  public void onClickListenerOpenButton(View view)
+  {
+    OpenFileDialog mFileDialog = new OpenFileDialog(this)
+            .setFilter(".*\\.bmp")
+            .setOpenDialogListener(new OpenBitmapListener());
+    mFileDialog.show();
   }
 }

@@ -2,7 +2,8 @@
     <string name="app_name">XRSC</string>
     <string name="action_settings">Settings</string>
     <string name="defaultServer">192.168.4.1</string>
-    <string name="textSendButton1">Send Text String</string>
-    <string name="textSendButton2">Send Image as String</string>
+    <string name="textSendButton">Send</string>
     <string name="textStatusDefault">Not connected</string>
+    <string name="textOpenButton">Open File</string>
+    <string name="textImageView">Road Sign Image</string>
 </resources>
