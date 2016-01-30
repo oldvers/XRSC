@@ -81,7 +81,11 @@ public class MainActivity extends AppCompatActivity
     mSend = (Button) findViewById(R.id.idSendButton);
     mImageView = (ImageView) findViewById(R.id.idImageView);
     mBrightness = (SeekBar) findViewById(R.id.idSeekBar);
-    mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign);
+
+    BitmapFactory.Options mOptions = new BitmapFactory.Options();
+    mOptions.inScaled = false;
+    mOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+    mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign, mOptions);
 
     mClientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
       {
@@ -343,14 +347,18 @@ public class MainActivity extends AppCompatActivity
     {
       BitmapFactory.Options mOptions = new BitmapFactory.Options();
       mOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+      mOptions.inScaled = false;
+      mOptions.inJustDecodeBounds = true;
       mBitmap = BitmapFactory.decodeFile(aFileName, mOptions);
 
-      if ((mBitmap.getWidth() != 48) || (mBitmap.getHeight() != 32))
+      if ((mOptions.outWidth != 48) || (mOptions.outHeight != 32))
       {
         Toast.makeText(getApplicationContext(), "Wrond Image Dimentions!", Toast.LENGTH_LONG).show();
       }
       else
       {
+        mOptions.inJustDecodeBounds = false;
+        mBitmap = BitmapFactory.decodeFile(aFileName, mOptions);
         mImageView.setImageBitmap(mBitmap);
       }
     }
