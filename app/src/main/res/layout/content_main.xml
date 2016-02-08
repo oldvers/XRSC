@@ -22,19 +22,6 @@
         android:paddingLeft="10dp"
         android:paddingRight="10dp">
 
-        <EditText
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:id="@+id/idServer"
-            android:layout_gravity="left"
-            android:inputType="text"
-            android:layout_alignParentStart="true"
-            android:layout_alignWithParentIfMissing="false"
-            android:text="@string/defaultServer"
-            android:layout_toStartOf="@+id/idClientSwitch"
-            android:layout_marginRight="20dp"
-            android:layout_centerVertical="true"/>
-
         <Switch
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -46,7 +33,18 @@
             android:layout_centerVertical="true"
             android:textOn="ON"
             android:textOff="OFF"
-            />
+            android:layout_alignParentStart="false"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:text="@string/connectionText"
+            android:id="@+id/idClientText"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"
+            android:gravity="center"
+            android:layout_toStartOf="@+id/idClientSwitch"
+            android:textAlignment="textStart"/>
 
     </RelativeLayout>
 
@@ -67,16 +65,85 @@
             android:id="@+id/idStatusText"
             android:layout_gravity="top|center_horizontal"
             android:gravity="center_horizontal"
-            android:layout_marginBottom="20dp"/>
+            android:layout_marginBottom="5dp"/>
 
-        <SeekBar
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:text="@string/rsOnOffText"
+                android:id="@+id/idRSOnOffText"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:textAlignment="viewStart"
+                android:layout_toStartOf="@+id/idRoadSignSwitch"/>
+
+            <Switch
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/idRoadSignSwitch"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:enabled="true"
+                android:checked="false"
+                android:layout_centerVertical="true"
+                android:textOn="ON"
+                android:textOff="OFF"
+                android:layout_alignParentStart="false"/>
+        </RelativeLayout>
+
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/idSeekBar"
             android:layout_gravity="center_horizontal"
-            android:max="100"
-            android:progress="30"
-            android:layout_marginBottom="10dp"/>
+            android:paddingRight="5dp"
+            android:paddingLeft="5dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp">
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="30dp"
+                android:text="@string/brightnessText"
+                android:id="@+id/idBrightnessText"
+                android:gravity="center"
+                android:textAlignment="viewStart"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toEndOf="@+id/idBrightnessText"
+                >
+
+                <SeekBar
+                    android:layout_width="match_parent"
+                    android:layout_height="30dp"
+                    android:id="@+id/idBrightnessSeekBar"
+                    android:layout_gravity="center_horizontal"
+                    android:max="100"
+                    android:progress="30"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_toStartOf="@+id/idBrightnessPercent"/>
+
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="30dp"
+                    android:text="@string/percentText"
+                    android:id="@+id/idBrightnessPercent"
+                    android:gravity="center"
+                    android:layout_alignParentEnd="true"/>
+            </RelativeLayout>
+        </RelativeLayout>
 
         <Button
             android:layout_width="match_parent"
@@ -110,6 +177,60 @@
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:onClick="onClickListenerSendButton"/>
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:paddingRight="5dp"
+            android:paddingLeft="5dp">
+
+            <TextView
+                android:layout_width="80dp"
+                android:layout_height="30dp"
+                android:text="@string/delayText"
+                android:id="@+id/idDelayText"
+                android:gravity="center"
+                android:textAlignment="viewStart"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/idDelayText">
+
+                <SeekBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:id="@+id/idDelaySeekBar"
+                    android:progress="10"
+                    android:max="15"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@+id/idSecondsText"/>
+
+                <TextView
+                    android:layout_width="50dp"
+                    android:layout_height="30dp"
+                    android:text="@string/secondsText"
+                    android:id="@+id/idSecondsText"
+                    android:gravity="center"
+                    android:layout_alignParentEnd="true"/>
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/textSlideButton"
+            android:id="@+id/idSlideButton"
+            android:layout_gravity="top"
+            android:textAlignment="center"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:onClick="onClickListenerSlideButton"/>
+
     </LinearLayout>
 
 </RelativeLayout>

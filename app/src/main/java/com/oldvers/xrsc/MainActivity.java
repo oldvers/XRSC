@@ -26,16 +26,23 @@ import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
-  private String      mTag           = "MainThread";
-  private EditText    mServer;
-  private Switch      mClientSwitch;
-  private TextView    mStatusText;
-  private Button      mSend;
-  private ImageView   mImageView;
-  private Bitmap      mBitmap        = null;
-  private SeekBar     mBrightness;
-  private TCPClient   mTcpClient     = null;
-  private aClientTask mClientTask    = null;
+  private final String   HexSymbols     = "0123456789ABCDEF";
+  private final byte     PACKET_IMAGE   = 0;
+  private final byte     PACKET_SLIDE   = 1;
+
+  private String         mTag           = "MainThread";
+  private Switch         mClientSwitch;
+  private Switch         mRoadSignSwitch;
+  private TextView       mStatusText;
+  private TextView       mBrightPercents;
+  private TextView       mDelaySeconds;
+  private Button         mSend;
+  private ImageView      mImageView;
+  private Bitmap         mBitmap        = null;
+  private SeekBar        mBrightness;
+  private SeekBar        mDelay;
+  private TCPClient      mTcpClient     = null;
+  private aClientTask    mClientTask    = null;
 
   private final String aPicture =
           "SHOW_IMG->100:000000000000009024490200000000000000D8B66D03000048F2FFFF9F04000060DBB" +
@@ -75,12 +82,15 @@ public class MainActivity extends AppCompatActivity
       }
     });
 
-    mServer = (EditText) findViewById(R.id.idServer);
     mClientSwitch = (Switch) findViewById(R.id.idClientSwitch);
+    mRoadSignSwitch = (Switch) findViewById(R.id.idRoadSignSwitch);
     mStatusText = (TextView) findViewById(R.id.idStatusText);
+    mBrightPercents = (TextView) findViewById(R.id.idBrightnessPercent);
+    mDelaySeconds = (TextView) findViewById(R.id.idSecondsText);
     mSend = (Button) findViewById(R.id.idSendButton);
     mImageView = (ImageView) findViewById(R.id.idImageView);
-    mBrightness = (SeekBar) findViewById(R.id.idSeekBar);
+    mBrightness = (SeekBar) findViewById(R.id.idBrightnessSeekBar);
+    mDelay = (SeekBar) findViewById(R.id.idDelaySeekBar);
 
     BitmapFactory.Options mOptions = new BitmapFactory.Options();
     mOptions.inScaled = false;
@@ -95,6 +105,82 @@ public class MainActivity extends AppCompatActivity
           manageConnection();
         }
       });
+
+    mRoadSignSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+    {
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+      {
+        StringBuilder packet = new StringBuilder();
+        int i, CRC;
+
+        if(mTcpClient == null) return;
+
+        if(mRoadSignSwitch.isChecked())
+        {
+          Log.d(mTag, "RoadSignSwitch chesked ON");
+          packet.append("ROAD_SIGN->ON$");
+        }
+        else
+        {
+          Log.d(mTag, "RoadSignSwitch chesked OFF");
+          packet.append("ROAD_SIGN->OFF$");
+        }
+
+        CRC = 0;
+        for (i = 0; i < packet.toString().length(); i++)
+          CRC += (int)packet.toString().charAt(i);
+
+        packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+        packet.append(HexSymbols.charAt((CRC & 0x0F)));
+        packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+        packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
+
+        mTcpClient.sendMessage(packet.toString());
+      }
+    });
+
+    mBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
+    {
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int i, boolean b)
+      {
+        mBrightPercents.setText(mBrightness.getProgress() + " %");
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar)
+      {
+        //
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar)
+      {
+        //
+      }
+    });
+
+    mDelay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener()
+    {
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int i, boolean b)
+      {
+        mDelaySeconds.setText(mDelay.getProgress() + " s");
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar)
+      {
+        //
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar)
+      {
+        //
+      }
+    });
 
     /*mClientSwitch.setOnClickListener(new View.OnClickListener()
     {
@@ -114,7 +200,16 @@ public class MainActivity extends AppCompatActivity
     // Sends the message to the server
     if(mTcpClient != null)
     {
-      mTcpClient.sendMessage(formatPacket(packBitmap()));
+      mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
+    }
+  }
+
+  public void onClickListenerSlideButton(View view)
+  {
+    // Sends the message to the server
+    if(mTcpClient != null)
+    {
+      mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_SLIDE));
     }
   }
 
@@ -189,7 +284,7 @@ public class MainActivity extends AppCompatActivity
     {
       super.onPreExecute();
 
-      cServer = mServer.getText().toString();
+      cServer = getString(R.string.defaultServer);
 
       Log.d(cTag, "Do Pre Execute : Server = " + cServer);
     }
@@ -302,20 +397,34 @@ public class MainActivity extends AppCompatActivity
     return pb;
   }
 
-  private String formatPacket(byte[] aPackedBitmap)
+  private String formatPacket(byte[] aPackedBitmap, byte aPacketType)
   {
     StringBuilder packet = new StringBuilder("");
 
-    final String HexSymbols = "0123456789ABCDEF";
     int i, CRC;
 
-    //SHOW_IMG->100:aabbb..............bbaa\r
+    //SHOW_IMG->100:aabbb..............$bbaa\r
+    //SHOW_SLD->100:12:aabbb..............$bbaa\r
 
     if (aPackedBitmap == null) return null;
 
-    packet.append("SHOW_IMG->");
-    packet.append(mBrightness.getProgress());
-    packet.append(":");
+    switch(aPacketType)
+    {
+      case PACKET_IMAGE:
+        packet.append("SHOW_IMG->");
+        packet.append(mBrightness.getProgress());
+        packet.append(":");
+        break;
+      case PACKET_SLIDE:
+        packet.append("SHOW_SLD->");
+        packet.append(mBrightness.getProgress());
+        packet.append(":");
+        packet.append(mDelay.getProgress());
+        packet.append(":");
+        break;
+      default:
+        return null;
+    }
 
     CRC = 0;
     for (i = 0; i < packet.toString().length(); i++)

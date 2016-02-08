@@ -2,8 +2,15 @@
     <string name="app_name">XRSC</string>
     <string name="action_settings">Settings</string>
     <string name="defaultServer">192.168.4.1</string>
-    <string name="textSendButton">Send</string>
+    <string name="textSendButton">Send as Image</string>
     <string name="textStatusDefault">Not connected</string>
     <string name="textOpenButton">Open File</string>
     <string name="textImageView">Road Sign Image</string>
+    <string name="connectionText">Connection with Road Sign</string>
+    <string name="rsOnOffText">Road Sign On/Off switch</string>
+    <string name="delayText">Delay</string>
+    <string name="secondsText">10 s</string>
+    <string name="brightnessText">Brightness</string>
+    <string name="percentText">30 %</string>
+    <string name="textSlideButton">Send as Slide</string>
 </resources>
