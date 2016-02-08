@@ -7,10 +7,11 @@
     <string name="textOpenButton">Open File</string>
     <string name="textImageView">Road Sign Image</string>
     <string name="connectionText">Connection with Road Sign</string>
-    <string name="rsOnOffText">Road Sign On/Off switch</string>
+    <string name="rsOnOffText">Road Sign switch Off</string>
     <string name="delayText">Delay</string>
     <string name="secondsText">10 s</string>
     <string name="brightnessText">Brightness</string>
     <string name="percentText">30 %</string>
     <string name="textSlideButton">Send as Slide</string>
+    <string name="textOffButton">OFF</string>
 </resources>

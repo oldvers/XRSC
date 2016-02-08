@@ -204,6 +204,27 @@ public class MainActivity extends AppCompatActivity
     }
   }
 
+  public void onClickListenerOffButton(View view)
+  {
+    StringBuilder packet = new StringBuilder();
+    int i, CRC;
+
+    if(mTcpClient == null) return;
+
+    packet.append("ROAD_SIGN->OFF$");
+
+    CRC = 0;
+    for (i = 0; i < packet.toString().length(); i++)
+      CRC += (int)packet.toString().charAt(i);
+
+    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+    packet.append(HexSymbols.charAt((CRC & 0x0F)));
+    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
+
+    mTcpClient.sendMessage(packet.toString());
+  }
+
   public void onClickListenerSlideButton(View view)
   {
     // Sends the message to the server
