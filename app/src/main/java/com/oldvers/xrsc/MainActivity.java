@@ -15,8 +15,8 @@ import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -26,6 +26,27 @@ import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
+  private final Integer Images[] =
+                         {
+                           R.drawable.rs_01,
+                           R.drawable.rs_02,
+                           R.drawable.rs_03,
+                           R.drawable.rs_04,
+                           R.drawable.rs_05,
+                           R.drawable.rs_06,
+                           R.drawable.rs_07,
+                         };
+  private final Integer Animations[] =
+                         {
+                           R.drawable.rsb_01,
+                           R.drawable.rsb_02,
+                           R.drawable.rsb_03,
+                           R.drawable.rsb_04,
+                           R.drawable.rsb_05,
+                           R.drawable.rsb_06,
+                           R.drawable.rsb_07,
+                         };
+
   private final String   HexSymbols     = "0123456789ABCDEF";
   private final byte     PACKET_IMAGE   = 0;
   private final byte     PACKET_SLIDE   = 1;
@@ -61,6 +82,104 @@ public class MainActivity extends AppCompatActivity
                   "23F01000000000000000000000048FEFFFFFF0400000000000000000000000000922449120000000000" +
                   "0000$2FFE";
 
+  private class RSId
+  {
+    private String id;
+    private Bitmap bmp;
+
+    public RSId(String aStr, Bitmap aBmp)
+    {
+      id = aStr;
+      bmp = aBmp;
+    }
+
+    public String getId()
+    {
+      return id;
+    }
+
+    public Bitmap getBmp()
+    {
+      return bmp;
+    }
+  }
+
+  private void addImagesToTheGallery()
+  {
+    final LinearLayout mImageGallery = (LinearLayout)findViewById(R.id.idImageGallery);
+    final LinearLayout mAnimationGallery = (LinearLayout)findViewById(R.id.idAnimationGallery);
+    Bitmap uBitmap;
+    String uString;
+
+    View.OnClickListener uOnImageClick = new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View view)
+      {
+        Log.d("ImgClick", "On image click. ID = " + ((RSId)view.getTag()).getId());
+
+        mBitmap = ((RSId)view.getTag()).getBmp();
+
+        mImageView.setImageBitmap(mBitmap);
+
+        if(mTcpClient != null)
+        {
+          mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
+        }
+      }
+    };
+
+    View.OnClickListener uOnAnimationClick = new View.OnClickListener()
+    {
+      @Override
+      public void onClick(View view)
+      {
+        Log.d("AnimClick", "On animation click. ID = " + ((RSId)view.getTag()).getId());
+
+        mBitmap = ((RSId)view.getTag()).getBmp();
+
+        mImageView.setImageBitmap(mBitmap);
+
+        if(mTcpClient != null)
+        {
+          mTcpClient.sendMessage("SET_ANIMATION_" + ((RSId)view.getTag()).getId());
+        }
+      }
+    };
+
+    BitmapFactory.Options uOptions = new BitmapFactory.Options();
+    uOptions.inScaled = false;
+    uOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+    for (Integer image : Images)
+    {
+      uString = getResources().getResourceEntryName(image).substring(4, 5);
+      uBitmap = BitmapFactory.decodeResource(getResources(), image, uOptions);
+      mImageGallery.addView(getImageView(image, new RSId(uString, uBitmap), uOnImageClick));
+    }
+
+    for (Integer anime : Animations)
+    {
+      uString = getResources().getResourceEntryName(anime).substring(5, 6);
+      uBitmap = BitmapFactory.decodeResource(getResources(), anime, uOptions);
+      mAnimationGallery.addView(getImageView(anime, new RSId(uString, uBitmap), uOnAnimationClick));
+    }
+  }
+
+  private View getImageView(Integer aImage, Object aObject, View.OnClickListener aOnClick)
+  {
+    ImageView mImageView = new ImageView(getApplicationContext());
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(192, 128);
+    lp.width = 192;
+    lp.height = 128;
+    lp.setMargins(0, 0, 10, 0);
+    mImageView.setLayoutParams(lp);
+    mImageView.setTag(aObject);
+    mImageView.setImageResource(aImage);
+    mImageView.setClickable(true);
+    mImageView.setOnClickListener(aOnClick);
+    return mImageView;
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -96,6 +215,8 @@ public class MainActivity extends AppCompatActivity
     mOptions.inScaled = false;
     mOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
     mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign, mOptions);
+
+    addImagesToTheGallery();
 
     mClientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
       {

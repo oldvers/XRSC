@@ -44,7 +44,8 @@ public class TCPClient
 
     if (mOS != null && !mOS.checkError())
     {
-      mOS.println(message);
+      //mOS.println(message);
+      mOS.print(message);
       mOS.flush();
 
       Log.d("TCP Client", "Message sent");

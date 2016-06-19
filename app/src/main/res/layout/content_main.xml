@@ -141,14 +141,6 @@
             </RelativeLayout>
         </RelativeLayout>
 
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/textOpenButton"
-            android:id="@+id/idOpenButton"
-            android:layout_gravity="center_horizontal"
-            android:onClick="onClickListenerOpenButton"/>
-
         <ImageView
             android:layout_width="192dp"
             android:layout_height="128dp"
@@ -161,7 +153,30 @@
             android:fitsSystemWindows="false"
             android:cropToPadding="false"
             android:adjustViewBounds="false"
-            android:contentDescription="@string/textImageView"/>
+            android:contentDescription="@string/textImageView"
+            android:clickable="true"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/textOpenButton"
+            android:id="@+id/idOpenButton"
+            android:layout_gravity="center_horizontal"
+            android:onClick="onClickListenerOpenButton"
+            android:enabled="false"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/idImageGallery">
+            </LinearLayout>
+        </HorizontalScrollView>
 
         <Button
             android:layout_width="match_parent"
@@ -172,7 +187,20 @@
             android:textAlignment="center"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:onClick="onClickListenerSendButton"/>
+            android:onClick="onClickListenerSendButton"
+            android:enabled="false"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/idAnimationGallery"/>
+        </HorizontalScrollView>
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -181,7 +209,8 @@
             android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             android:paddingRight="5dp"
-            android:paddingLeft="5dp">
+            android:paddingLeft="5dp"
+            android:visibility="invisible">
 
             <TextView
                 android:layout_width="80dp"
@@ -225,7 +254,8 @@
             android:textAlignment="center"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:onClick="onClickListenerSlideButton"/>
+            android:onClick="onClickListenerSlideButton"
+            android:visibility="invisible"/>
 
         <Switch
             android:layout_width="wrap_content"
