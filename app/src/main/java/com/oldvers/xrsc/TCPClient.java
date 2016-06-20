@@ -21,6 +21,7 @@ public class TCPClient
   public static final int    mServerPort      = 333;
   private OnMessageReceived  mMessageListener = null;
   private boolean            mRun             = false;
+  private RsPacket           mPacket;
 
   //private PrintWriter        mOS;
   private OutputStream       mOS;
@@ -53,8 +54,10 @@ public class TCPClient
 //    }
 //  }
 
-  public void sendRaw(byte[] message)
+  public boolean sendRaw(byte[] message)
   {
+    boolean result = false;
+
     Log.d("TCP Client", "Sending raw data");
 
     if(mOS != null) // && !mOS.checkError())
@@ -63,12 +66,15 @@ public class TCPClient
       {
         mOS.write(message);
         Log.d("TCP Client", "Message sent");
+        result = true;
       }
       catch(IOException e)
       {
-        Log.d("TCP Client", "ERROR:" + e.getMessage());
+        Log.d("TCP Client", "ERROR: " + e.getMessage());
       }
     }
+
+    return result;
   }
 
   public void stop()
@@ -93,6 +99,8 @@ public class TCPClient
       // Creates an unconnected socket
       Socket mSocket = new Socket();
 
+      mSocket.setKeepAlive(true);
+
       int mConnectTimeout = 3000;   // 3000 millis = 3 seconds
 
       Log.d("TCP Client", "Connecting...");
@@ -113,7 +121,9 @@ public class TCPClient
         mMessageListener.messageReceived("Connected");
       }
 
-      mSocket.setSoTimeout(200);
+      mPacket = new RsPacket();
+
+      mSocket.setSoTimeout(3000);
 
       try
       {
@@ -131,11 +141,17 @@ public class TCPClient
           {
             Log.d("TCP Client", "Reading...");
 
-            mServerMessage = mIS.readLine();
+            //mServerMessage = mIS.readLine();
+            if(!sendRaw(mPacket.getStatus())) throw new IOException("Socket unavailable");
+
+            mSocket.getInputStream().read();
+
+            Thread.sleep(1000);
           }
           catch (Exception e)
           {
             Log.d("TCP Client", "Reading Timeout occured.");
+            mRun = false;
           }
 
           if (mServerMessage != null && mMessageListener != null)

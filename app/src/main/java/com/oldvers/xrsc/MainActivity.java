@@ -26,6 +26,7 @@ import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
+  private final int     IMAGES_COUNT     = 12;
   private final Integer ImagesSlides[][] =
           {
             { R.drawable.rs_01, R.drawable.rsb_01 },
@@ -35,11 +36,16 @@ public class MainActivity extends AppCompatActivity
             { R.drawable.rs_05, R.drawable.rsb_05 },
             { R.drawable.rs_06, R.drawable.rsb_06 },
             { R.drawable.rs_07, R.drawable.rsb_07 },
+            { R.drawable.rs_08, R.drawable.rsb_08 },
+            { R.drawable.rs_09, R.drawable.rsb_09 },
+            { R.drawable.rs_10, R.drawable.rsb_10 },
+            { R.drawable.rs_11, R.drawable.rsb_11 },
+            { R.drawable.rs_12, R.drawable.rsb_12 },
           };
 
   private final String   HexSymbols     = "0123456789ABCDEF";
 
-  private String         mTag           = "MainThread";
+  private String         mTag           = "XRSC Main";
   private Switch         mClientSwitch;
   private Switch         mRoadSignSwitch;
   private TextView       mStatusText;
@@ -104,8 +110,7 @@ public class MainActivity extends AppCompatActivity
 
         if(mTcpClient != null)
         {
-          //mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
-          mTcpClient.sendRaw(mPacket.setImage(packBitmap(), mBrightness.getProgress()));
+           mTcpClient.sendRaw(mPacket.setImage(packBitmap(), mBrightness.getProgress()));
         }
       }
     };
@@ -119,8 +124,6 @@ public class MainActivity extends AppCompatActivity
 
         Log.d("AnimClick", "On animation click. ID = " + ((RSId)view.getTag()).getId());
 
-
-        //mImageGallery.get
         mBitmap = ((RSId)view.getTag()).getImg();
         img1 = packBitmap();
         mBitmap = ((RSId)view.getTag()).getSld();
@@ -130,7 +133,6 @@ public class MainActivity extends AppCompatActivity
 
         if(mTcpClient != null)
         {
-          //mTcpClient.sendMessage("SET_ANIMATION_" + ((RSId)view.getTag()).getId());
           mTcpClient.sendRaw(mPacket.setSlide(img1, img2, 500, mBrightness.getProgress()));
         }
       }
@@ -140,23 +142,13 @@ public class MainActivity extends AppCompatActivity
     uOptions.inScaled = false;
     uOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-    //for (Integer image : ImagesSlides)
-    for (int pair = 0; pair < 7; pair++)
+    for (int pair = 0; pair < IMAGES_COUNT; pair++)
     {
-      //uString = getResources().getResourceEntryName(image).substring(4, 5);
       uString = getResources().getResourceEntryName(ImagesSlides[pair][0]).substring(4, 5);
       uImage = BitmapFactory.decodeResource(getResources(), ImagesSlides[pair][0], uOptions);
       uSlide = BitmapFactory.decodeResource(getResources(), ImagesSlides[pair][1], uOptions);
       uRSId = new RSId(uString, uImage, uSlide);
-      //mImageGallery.addView(getImageView(image, new RSId(uString, uBitmap), uOnImageClick));
-    //}
-
-    //for (Integer anime : Animations)
-    //{
-      //uString = getResources().getResourceEntryName(anime).substring(5, 6);
-      //uBitmap = BitmapFactory.decodeResource(getResources(), anime, uOptions);
       mImageGallery.addView(getImageView(ImagesSlides[pair][0], uRSId, uOnImageClick));
-      //mAnimationGallery.addView(getImageView(anime, new RSId(uString, uBitmap), uOnAnimationClick));
       mAnimationGallery.addView(getImageView(ImagesSlides[pair][1], uRSId, uOnAnimationClick));
     }
   }
@@ -164,9 +156,9 @@ public class MainActivity extends AppCompatActivity
   private View getImageView(Integer aImage, Object aObject, View.OnClickListener aOnClick)
   {
     ImageView mImageView = new ImageView(getApplicationContext());
-    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(192, 128);
-    lp.width = 192;
-    lp.height = 128;
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(96, 64);
+    lp.width = 96;
+    lp.height = 64;
     lp.setMargins(0, 0, 10, 0);
     mImageView.setLayoutParams(lp);
     mImageView.setTag(aObject);
@@ -271,13 +263,18 @@ public class MainActivity extends AppCompatActivity
       @Override
       public void onStartTrackingTouch(SeekBar seekBar)
       {
-        //
+        Log.d(mTag, "Brightness changing START");
       }
 
       @Override
       public void onStopTrackingTouch(SeekBar seekBar)
       {
-        //
+        Log.d(mTag, "Brightness changing STOP");
+
+        if(mTcpClient != null)
+        {
+          mTcpClient.sendRaw(mPacket.setRefreshBrightness(mBrightness.getProgress()));
+        }
       }
     });
 
@@ -326,23 +323,8 @@ public class MainActivity extends AppCompatActivity
 
   public void onClickListenerOffButton(View view)
   {
-    StringBuilder packet = new StringBuilder();
-    int i, CRC;
-
     if(mTcpClient == null) return;
 
-//    packet.append("ROAD_SIGN->OFF$");
-//
-//    CRC = 0;
-//    for (i = 0; i < packet.toString().length(); i++)
-//      CRC += (int)packet.toString().charAt(i);
-//
-//    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
-//    packet.append(HexSymbols.charAt((CRC & 0x0F)));
-//    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
-//    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
-
-//    mTcpClient.sendMessage(packet.toString());
     mTcpClient.sendRaw(mPacket.refreshOff());
   }
 
@@ -537,58 +519,6 @@ public class MainActivity extends AppCompatActivity
 
     return pb;
   }
-
-//  private String formatPacket(byte aPacketType, byte[] aPackedBitmap, )
-//  {
-//    StringBuilder packet = new StringBuilder("");
-//
-//    int i, CRC;
-//
-//    //SHOW_IMG->100:aabbb..............$bbaa\r
-//    //SHOW_SLD->100:12:aabbb..............$bbaa\r
-//
-//    if (aPackedBitmap == null) return null;
-//
-//    switch(aPacketType)
-//    {
-//      case PACKET_IMAGE:
-//        packet.append("SHOW_IMG->");
-//        packet.append(mBrightness.getProgress());
-//        packet.append(":");
-//        break;
-//      case PACKET_SLIDE:
-//        packet.append("SHOW_SLD->");
-//        packet.append(mBrightness.getProgress());
-//        packet.append(":");
-//        packet.append(mDelay.getProgress());
-//        packet.append(":");
-//        break;
-//      default:
-//        return null;
-//    }
-//
-//    CRC = 0;
-//    for (i = 0; i < packet.toString().length(); i++)
-//      CRC += (int)packet.toString().charAt(i);
-//
-//    for (i = 0; i < aPackedBitmap.length; i++)
-//    {
-//      packet.append(HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F)));
-//      CRC += (int)HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F));
-//      packet.append(HexSymbols.charAt(aPackedBitmap[i] & 0x0F));
-//      CRC += (int)HexSymbols.charAt(aPackedBitmap[i] & 0x0F);
-//    }
-//
-//    packet.append("$");
-//    CRC += (int)'$';
-//
-//    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
-//    packet.append(HexSymbols.charAt((CRC & 0x0F)));
-//    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
-//    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
-//
-//    return packet.toString();
-//  }
 
   private class OpenBitmapListener implements OpenFileDialog.OpenDialogListener
   {

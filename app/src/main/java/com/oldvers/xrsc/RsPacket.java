@@ -12,6 +12,7 @@ public class RsPacket
   private static final byte RS_CMD_SET_IMAGE   = 2;
   private static final byte RS_CMD_SET_SLIDE   = 3;
   private static final byte RS_CMD_SET_CLIP    = 4;
+  private static final byte RS_CMD_GET_STATUS  = 5;
   private static final byte RS_CMD_REFRESH_OFF = 126;
 
   private byte[] packet = new byte[2048];
@@ -116,6 +117,28 @@ public class RsPacket
     this.clear();
     this.setCommand(RS_CMD_REFRESH_OFF);
     this.setBrightness((byte)0);
+    this.setParameter(0);
+    this.calcCS();
+
+    return Arrays.copyOf(packet, length);
+  }
+
+  public byte[] getStatus()
+  {
+    this.clear();
+    this.setCommand(RS_CMD_GET_STATUS);
+    this.setBrightness((byte)0);
+    this.setParameter(0);
+    this.calcCS();
+
+    return Arrays.copyOf(packet, length);
+  }
+
+  public byte[] setRefreshBrightness(int brightness)
+  {
+    this.clear();
+    this.setCommand(RS_CMD_SET_BRIGHT);
+    this.setBrightness((byte) (brightness & 0xFF));
     this.setParameter(0);
     this.calcCS();
 
