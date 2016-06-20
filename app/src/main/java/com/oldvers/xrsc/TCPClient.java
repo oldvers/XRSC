@@ -17,12 +17,13 @@ import java.net.UnknownHostException;
 public class TCPClient
 {
   private String             mServerMessage;
-  private String             mServer          = "192.168.4.1";;
+  private String             mServer          = "192.168.4.1";
   public static final int    mServerPort      = 333;
   private OnMessageReceived  mMessageListener = null;
   private boolean            mRun             = false;
 
-  private PrintWriter        mOS;
+  //private PrintWriter        mOS;
+  private OutputStream       mOS;
   private BufferedReader     mIS;
 
   /**
@@ -38,17 +39,35 @@ public class TCPClient
    * Sends the message entered by client to the server
    * @param message text entered by client
    */
-  public void sendMessage(String message)
+//  public void sendMessage(String message)
+//  {
+//    Log.d("TCP Client", "Sending message");
+//
+//    if (mOS != null && !mOS.checkError())
+//    {
+//      //mOS.println(message);
+//      mOS.print(message);
+//      mOS.flush();
+//
+//      Log.d("TCP Client", "Message sent");
+//    }
+//  }
+
+  public void sendRaw(byte[] message)
   {
-    Log.d("TCP Client", "Sending message");
+    Log.d("TCP Client", "Sending raw data");
 
-    if (mOS != null && !mOS.checkError())
+    if(mOS != null) // && !mOS.checkError())
     {
-      //mOS.println(message);
-      mOS.print(message);
-      mOS.flush();
-
-      Log.d("TCP Client", "Message sent");
+      try
+      {
+        mOS.write(message);
+        Log.d("TCP Client", "Message sent");
+      }
+      catch(IOException e)
+      {
+        Log.d("TCP Client", "ERROR:" + e.getMessage());
+      }
     }
   }
 
@@ -99,7 +118,8 @@ public class TCPClient
       try
       {
         // Send the message to the server
-        mOS = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream())), true);
+        //mOS = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mSocket.getOutputStream())), true);
+        mOS = mSocket.getOutputStream();
 
         // Receive the message which the server sends back
         mIS = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));

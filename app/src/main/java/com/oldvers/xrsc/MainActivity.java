@@ -26,30 +26,18 @@ import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
-  private final Integer Images[] =
-                         {
-                           R.drawable.rs_01,
-                           R.drawable.rs_02,
-                           R.drawable.rs_03,
-                           R.drawable.rs_04,
-                           R.drawable.rs_05,
-                           R.drawable.rs_06,
-                           R.drawable.rs_07,
-                         };
-  private final Integer Animations[] =
-                         {
-                           R.drawable.rsb_01,
-                           R.drawable.rsb_02,
-                           R.drawable.rsb_03,
-                           R.drawable.rsb_04,
-                           R.drawable.rsb_05,
-                           R.drawable.rsb_06,
-                           R.drawable.rsb_07,
-                         };
+  private final Integer ImagesSlides[][] =
+          {
+            { R.drawable.rs_01, R.drawable.rsb_01 },
+            { R.drawable.rs_02, R.drawable.rsb_02 },
+            { R.drawable.rs_03, R.drawable.rsb_03 },
+            { R.drawable.rs_04, R.drawable.rsb_04 },
+            { R.drawable.rs_05, R.drawable.rsb_05 },
+            { R.drawable.rs_06, R.drawable.rsb_06 },
+            { R.drawable.rs_07, R.drawable.rsb_07 },
+          };
 
   private final String   HexSymbols     = "0123456789ABCDEF";
-  private final byte     PACKET_IMAGE   = 0;
-  private final byte     PACKET_SLIDE   = 1;
 
   private String         mTag           = "MainThread";
   private Switch         mClientSwitch;
@@ -63,34 +51,20 @@ public class MainActivity extends AppCompatActivity
   private SeekBar        mBrightness;
   private SeekBar        mDelay;
   private TCPClient      mTcpClient     = null;
+  private RsPacket       mPacket        = null;
   private aClientTask    mClientTask    = null;
-
-  private final String aPicture =
-          "SHOW_IMG->100:000000000000009024490200000000000000D8B66D03000048F2FFFF9F04000060DBB" +
-                  "60D000000000020F99F2449F23F010000000000D8B66D0300E44F92244992E40F0060DBB60D00000000" +
-                  "803C4992FC7F9224790000000000D8B66D03902749FEFFFFFF24C90360DBB60D00000000F224F9FFFFF" +
-                  "FFF3F491E00000000D8B66D439E24FFFFFFFFFFFF49F260DBB60D000000409EE4FFFFFFFFFFFF4FF200" +
-                  "000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF7F920700000000000" +
-                  "07992FF3F00E03F00FCFF933C0000000000007992FF0700E00700E0FF933C0000000000007992FF07FE" +
-                  "FF077EE0FF933C00000000000079F2FF0780FF077EE0FF9F3C00000000000079F2FF0700E0077EE0FF9" +
-                  "F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000000079F2FFFF7FE0077EE0FF9F3C00000000" +
-                  "000079F2FF077EE0077EE0FF9F3C0000000000007992FF0700E00700E0FF933C0000000000007992FF3" +
-                  "F00FC3F00FCFF933C000000000000C893FCFFFFFFFFFFFF7F9207000000000000C893FCFFFFFFFFFFFF" +
-                  "7F9207000000000000409EE4FFFFFFFFFFFF4FF200000000000000409E24FFFFFFFFFFFF49F20000000" +
-                  "000000000F224F9FFFFFFFF3F491E00000000000000009027C9FFFFFFFF27C903000000000000000080" +
-                  "3C4992FFFF93247900000000000000000000E44F92244992E40F0000000000000000000020F99324499" +
-                  "23F01000000000000000000000048FEFFFFFF0400000000000000000000000000922449120000000000" +
-                  "0000$2FFE";
 
   private class RSId
   {
     private String id;
-    private Bitmap bmp;
+    private Bitmap img;
+    private Bitmap sld;
 
-    public RSId(String aStr, Bitmap aBmp)
+    public RSId(String aStr, Bitmap aImg, Bitmap aSld)
     {
       id = aStr;
-      bmp = aBmp;
+      img = aImg;
+      sld = aSld;
     }
 
     public String getId()
@@ -98,9 +72,14 @@ public class MainActivity extends AppCompatActivity
       return id;
     }
 
-    public Bitmap getBmp()
+    public Bitmap getImg()
     {
-      return bmp;
+      return img;
+    }
+
+    public Bitmap getSld()
+    {
+      return sld;
     }
   }
 
@@ -108,8 +87,9 @@ public class MainActivity extends AppCompatActivity
   {
     final LinearLayout mImageGallery = (LinearLayout)findViewById(R.id.idImageGallery);
     final LinearLayout mAnimationGallery = (LinearLayout)findViewById(R.id.idAnimationGallery);
-    Bitmap uBitmap;
+    Bitmap uImage, uSlide;
     String uString;
+    RSId   uRSId;
 
     View.OnClickListener uOnImageClick = new View.OnClickListener()
     {
@@ -118,13 +98,14 @@ public class MainActivity extends AppCompatActivity
       {
         Log.d("ImgClick", "On image click. ID = " + ((RSId)view.getTag()).getId());
 
-        mBitmap = ((RSId)view.getTag()).getBmp();
+        mBitmap = ((RSId)view.getTag()).getImg();
 
         mImageView.setImageBitmap(mBitmap);
 
         if(mTcpClient != null)
         {
-          mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
+          //mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
+          mTcpClient.sendRaw(mPacket.setImage(packBitmap(), mBrightness.getProgress()));
         }
       }
     };
@@ -134,15 +115,23 @@ public class MainActivity extends AppCompatActivity
       @Override
       public void onClick(View view)
       {
+        byte[] img1, img2;
+
         Log.d("AnimClick", "On animation click. ID = " + ((RSId)view.getTag()).getId());
 
-        mBitmap = ((RSId)view.getTag()).getBmp();
+
+        //mImageGallery.get
+        mBitmap = ((RSId)view.getTag()).getImg();
+        img1 = packBitmap();
+        mBitmap = ((RSId)view.getTag()).getSld();
+        img2 = packBitmap();
 
         mImageView.setImageBitmap(mBitmap);
 
         if(mTcpClient != null)
         {
-          mTcpClient.sendMessage("SET_ANIMATION_" + ((RSId)view.getTag()).getId());
+          //mTcpClient.sendMessage("SET_ANIMATION_" + ((RSId)view.getTag()).getId());
+          mTcpClient.sendRaw(mPacket.setSlide(img1, img2, 500, mBrightness.getProgress()));
         }
       }
     };
@@ -151,18 +140,24 @@ public class MainActivity extends AppCompatActivity
     uOptions.inScaled = false;
     uOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-    for (Integer image : Images)
+    //for (Integer image : ImagesSlides)
+    for (int pair = 0; pair < 7; pair++)
     {
-      uString = getResources().getResourceEntryName(image).substring(4, 5);
-      uBitmap = BitmapFactory.decodeResource(getResources(), image, uOptions);
-      mImageGallery.addView(getImageView(image, new RSId(uString, uBitmap), uOnImageClick));
-    }
+      //uString = getResources().getResourceEntryName(image).substring(4, 5);
+      uString = getResources().getResourceEntryName(ImagesSlides[pair][0]).substring(4, 5);
+      uImage = BitmapFactory.decodeResource(getResources(), ImagesSlides[pair][0], uOptions);
+      uSlide = BitmapFactory.decodeResource(getResources(), ImagesSlides[pair][1], uOptions);
+      uRSId = new RSId(uString, uImage, uSlide);
+      //mImageGallery.addView(getImageView(image, new RSId(uString, uBitmap), uOnImageClick));
+    //}
 
-    for (Integer anime : Animations)
-    {
-      uString = getResources().getResourceEntryName(anime).substring(5, 6);
-      uBitmap = BitmapFactory.decodeResource(getResources(), anime, uOptions);
-      mAnimationGallery.addView(getImageView(anime, new RSId(uString, uBitmap), uOnAnimationClick));
+    //for (Integer anime : Animations)
+    //{
+      //uString = getResources().getResourceEntryName(anime).substring(5, 6);
+      //uBitmap = BitmapFactory.decodeResource(getResources(), anime, uOptions);
+      mImageGallery.addView(getImageView(ImagesSlides[pair][0], uRSId, uOnImageClick));
+      //mAnimationGallery.addView(getImageView(anime, new RSId(uString, uBitmap), uOnAnimationClick));
+      mAnimationGallery.addView(getImageView(ImagesSlides[pair][1], uRSId, uOnAnimationClick));
     }
   }
 
@@ -216,6 +211,8 @@ public class MainActivity extends AppCompatActivity
     mOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;
     mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign, mOptions);
 
+    mPacket = new RsPacket();
+
     addImagesToTheGallery();
 
     mClientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
@@ -240,24 +237,26 @@ public class MainActivity extends AppCompatActivity
         if(mRoadSignSwitch.isChecked())
         {
           Log.d(mTag, "RoadSignSwitch chesked ON");
-          packet.append("ROAD_SIGN->ON$");
+          //packet.append("ROAD_SIGN->ON$");
+          mTcpClient.sendRaw(mPacket.refreshOn(mBrightness.getProgress()));
         }
         else
         {
           Log.d(mTag, "RoadSignSwitch chesked OFF");
-          packet.append("ROAD_SIGN->OFF$");
+          //packet.append("ROAD_SIGN->OFF$");
+          mTcpClient.sendRaw(mPacket.refreshOff());
         }
 
-        CRC = 0;
-        for (i = 0; i < packet.toString().length(); i++)
-          CRC += (int)packet.toString().charAt(i);
-
-        packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
-        packet.append(HexSymbols.charAt((CRC & 0x0F)));
-        packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
-        packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
-
-        mTcpClient.sendMessage(packet.toString());
+//        CRC = 0;
+//        for (i = 0; i < packet.toString().length(); i++)
+//          CRC += (int)packet.toString().charAt(i);
+//
+//        packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+//        packet.append(HexSymbols.charAt((CRC & 0x0F)));
+//        packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+//        packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
+//
+//        mTcpClient.sendMessage(packet.toString());
       }
     });
 
@@ -321,7 +320,7 @@ public class MainActivity extends AppCompatActivity
     // Sends the message to the server
     if(mTcpClient != null)
     {
-      mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
+      //mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_IMAGE));
     }
   }
 
@@ -332,18 +331,19 @@ public class MainActivity extends AppCompatActivity
 
     if(mTcpClient == null) return;
 
-    packet.append("ROAD_SIGN->OFF$");
+//    packet.append("ROAD_SIGN->OFF$");
+//
+//    CRC = 0;
+//    for (i = 0; i < packet.toString().length(); i++)
+//      CRC += (int)packet.toString().charAt(i);
+//
+//    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+//    packet.append(HexSymbols.charAt((CRC & 0x0F)));
+//    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+//    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
 
-    CRC = 0;
-    for (i = 0; i < packet.toString().length(); i++)
-      CRC += (int)packet.toString().charAt(i);
-
-    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
-    packet.append(HexSymbols.charAt((CRC & 0x0F)));
-    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
-    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
-
-    mTcpClient.sendMessage(packet.toString());
+//    mTcpClient.sendMessage(packet.toString());
+    mTcpClient.sendRaw(mPacket.refreshOff());
   }
 
   public void onClickListenerSlideButton(View view)
@@ -351,7 +351,7 @@ public class MainActivity extends AppCompatActivity
     // Sends the message to the server
     if(mTcpClient != null)
     {
-      mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_SLIDE));
+      //mTcpClient.sendMessage(formatPacket(packBitmap(), PACKET_SLIDE));
     }
   }
 
@@ -490,16 +490,15 @@ public class MainActivity extends AppCompatActivity
 
   private byte[] packBitmap()
   {
-    if (mBitmap == null) return null;
+    if(mBitmap == null) return null;
 
     int x, y, bi, ba, v, c, color;
     int size = mBitmap.getWidth() * mBitmap.getHeight() * 3;
 
-    if (size % 8 != 0)
+    if(size % 8 != 0)
     {
       size = size / 8 + 1;
-    }
-    else
+    } else
     {
       size = size / 8;
     }
@@ -510,7 +509,7 @@ public class MainActivity extends AppCompatActivity
     ba = 0;
     v = 0;
 
-    for (y = 0; y < mBitmap.getHeight(); y++)
+    for(y = 0; y < mBitmap.getHeight(); y++)
     {
       for(x = 0; x < mBitmap.getWidth(); x++)
       {
@@ -525,7 +524,7 @@ public class MainActivity extends AppCompatActivity
 
           if(bi % 8 == 7)
           {
-            pb[v] = (byte)(ba & 0xFF);
+            pb[v] = (byte) (ba & 0xFF);
             ba = 0;
             v++;
           }
@@ -539,57 +538,57 @@ public class MainActivity extends AppCompatActivity
     return pb;
   }
 
-  private String formatPacket(byte[] aPackedBitmap, byte aPacketType)
-  {
-    StringBuilder packet = new StringBuilder("");
-
-    int i, CRC;
-
-    //SHOW_IMG->100:aabbb..............$bbaa\r
-    //SHOW_SLD->100:12:aabbb..............$bbaa\r
-
-    if (aPackedBitmap == null) return null;
-
-    switch(aPacketType)
-    {
-      case PACKET_IMAGE:
-        packet.append("SHOW_IMG->");
-        packet.append(mBrightness.getProgress());
-        packet.append(":");
-        break;
-      case PACKET_SLIDE:
-        packet.append("SHOW_SLD->");
-        packet.append(mBrightness.getProgress());
-        packet.append(":");
-        packet.append(mDelay.getProgress());
-        packet.append(":");
-        break;
-      default:
-        return null;
-    }
-
-    CRC = 0;
-    for (i = 0; i < packet.toString().length(); i++)
-      CRC += (int)packet.toString().charAt(i);
-
-    for (i = 0; i < aPackedBitmap.length; i++)
-    {
-      packet.append(HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F)));
-      CRC += (int)HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F));
-      packet.append(HexSymbols.charAt(aPackedBitmap[i] & 0x0F));
-      CRC += (int)HexSymbols.charAt(aPackedBitmap[i] & 0x0F);
-    }
-
-    packet.append("$");
-    CRC += (int)'$';
-
-    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
-    packet.append(HexSymbols.charAt((CRC & 0x0F)));
-    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
-    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
-
-    return packet.toString();
-  }
+//  private String formatPacket(byte aPacketType, byte[] aPackedBitmap, )
+//  {
+//    StringBuilder packet = new StringBuilder("");
+//
+//    int i, CRC;
+//
+//    //SHOW_IMG->100:aabbb..............$bbaa\r
+//    //SHOW_SLD->100:12:aabbb..............$bbaa\r
+//
+//    if (aPackedBitmap == null) return null;
+//
+//    switch(aPacketType)
+//    {
+//      case PACKET_IMAGE:
+//        packet.append("SHOW_IMG->");
+//        packet.append(mBrightness.getProgress());
+//        packet.append(":");
+//        break;
+//      case PACKET_SLIDE:
+//        packet.append("SHOW_SLD->");
+//        packet.append(mBrightness.getProgress());
+//        packet.append(":");
+//        packet.append(mDelay.getProgress());
+//        packet.append(":");
+//        break;
+//      default:
+//        return null;
+//    }
+//
+//    CRC = 0;
+//    for (i = 0; i < packet.toString().length(); i++)
+//      CRC += (int)packet.toString().charAt(i);
+//
+//    for (i = 0; i < aPackedBitmap.length; i++)
+//    {
+//      packet.append(HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F)));
+//      CRC += (int)HexSymbols.charAt(((aPackedBitmap[i] >> 4) & 0x0F));
+//      packet.append(HexSymbols.charAt(aPackedBitmap[i] & 0x0F));
+//      CRC += (int)HexSymbols.charAt(aPackedBitmap[i] & 0x0F);
+//    }
+//
+//    packet.append("$");
+//    CRC += (int)'$';
+//
+//    packet.append(HexSymbols.charAt(((CRC >> 4) & 0x0F)));
+//    packet.append(HexSymbols.charAt((CRC & 0x0F)));
+//    packet.append(HexSymbols.charAt(((CRC >> 12) & 0x0F)));
+//    packet.append(HexSymbols.charAt(((CRC >> 8) & 0x0F)));
+//
+//    return packet.toString();
+//  }
 
   private class OpenBitmapListener implements OpenFileDialog.OpenDialogListener
   {
