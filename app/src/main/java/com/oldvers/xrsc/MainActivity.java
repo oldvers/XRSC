@@ -26,7 +26,7 @@ import com.oldvers.rsc.R;
 
 public class MainActivity extends AppCompatActivity
 {
-  private final int     IMAGES_COUNT     = 12;
+  private final int     IMAGES_COUNT     = 13;
   private final Integer ImagesSlides[][] =
           {
             { R.drawable.rs_01, R.drawable.rsb_01 },
@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity
             { R.drawable.rs_10, R.drawable.rsb_10 },
             { R.drawable.rs_11, R.drawable.rsb_11 },
             { R.drawable.rs_12, R.drawable.rsb_12 },
+            { R.drawable.rs_13, R.drawable.rsb_13 },
           };
 
   private final String   HexSymbols     = "0123456789ABCDEF";
