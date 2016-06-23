@@ -1,5 +1,8 @@
 package com.oldvers.xrsc;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -9,10 +12,12 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -24,7 +29,10 @@ import android.widget.Toast;
 
 import com.oldvers.rsc.R;
 
-public class MainActivity extends AppCompatActivity
+import java.util.Date;
+
+
+public class MainActivity extends AppCompatActivity implements AppStatusDialog.OnCompleteListener
 {
   private final int     IMAGES_COUNT     = 13;
   private final Integer ImagesSlides[][] =
@@ -43,23 +51,88 @@ public class MainActivity extends AppCompatActivity
             { R.drawable.rs_12, R.drawable.rsb_12 },
             { R.drawable.rs_13, R.drawable.rsb_13 },
           };
-
+  private final long     ONE_DAY        = 24 * 60 * 60 * 1000;
   private final String   HexSymbols     = "0123456789ABCDEF";
+  private final String   PASS_KEY       = "AIXRSCV02ENRSCTRLBYAPP";
 
-  private String         mTag           = "XRSC Main";
-  private Switch         mClientSwitch;
-  private Switch         mRoadSignSwitch;
-  private TextView       mStatusText;
-  private TextView       mBrightPercents;
-  private TextView       mDelaySeconds;
-  private Button         mSend;
-  private ImageView      mImageView;
-  private Bitmap         mBitmap        = null;
-  private SeekBar        mBrightness;
-  private SeekBar        mDelay;
-  private TCPClient      mTcpClient     = null;
-  private RsPacket       mPacket        = null;
-  private aClientTask    mClientTask    = null;
+  private String               mTag           = "XRSC Main";
+  private Switch               mClientSwitch;
+  private Switch               mRoadSignSwitch;
+  private TextView             mStatusText;
+  private TextView             mBrightPercents;
+  private TextView             mDelaySeconds;
+  private Button               mSend;
+  private ImageView            mImageView;
+  private Bitmap               mBitmap        = null;
+  private SeekBar              mBrightness;
+  private SeekBar              mDelay;
+  private TCPClient            mTcpClient     = null;
+  private RsPacket             mPacket        = null;
+  private aClientTask          mClientTask    = null;
+  private FloatingActionButton mFab           = null;
+  private MenuItem             mMenuStatus    = null;
+  private AppStatusDialog      mStatusDialog  = null;
+  private boolean              mStatus        = false;
+
+
+  private boolean getStatus()
+  {
+    long firstRunDate;
+    boolean result = false;
+    String password = null;
+
+    SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+
+    password = prefs.getString("PassKey", null);
+
+    result = (password != null) && (password.equals(PASS_KEY));
+
+    if(!result)
+    {
+      firstRunDate = prefs.getLong("FirstRunDate", 0);
+
+      if(firstRunDate == 0)
+      {
+        // First run, so save the current date
+        SharedPreferences.Editor editor = prefs.edit();
+        Date now = new Date();
+        editor.putLong("FirstRunDate", now.getTime());
+        // Commit the edits!
+        editor.commit();
+        Log.d(mTag, "XRSC runs first time!");
+        result = true;
+      }
+      else
+      {
+        // This is not the 1st run, check install date
+        Date now = new Date();
+        long days = (now.getTime() - firstRunDate) / ONE_DAY;
+        if((0 <= days) && (days <= 30))
+        {
+          Log.d(mTag, "XRSC runs normally.");
+          result = true;
+        } else
+        {
+          // Expired !!!
+          Log.d(mTag, "XRSC trial expired!");
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private void savePassword(String password)
+  {
+    SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+
+    if(password.equals(PASS_KEY))
+    {
+      SharedPreferences.Editor editor = prefs.edit();
+      editor.putString("PassKey", password);
+      editor.commit();
+    }
+  }
 
   private class RSId
   {
@@ -178,16 +251,47 @@ public class MainActivity extends AppCompatActivity
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
-    FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-    fab.setOnClickListener(new View.OnClickListener()
-    {
-      @Override
-      public void onClick(View view)
-      {
-        Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
-      }
-    });
+    mStatus = getStatus();
+
+//    mFab = (FloatingActionButton)findViewById(R.id.fab);
+//    if ( mTrialExpired )
+//    {
+//      mFab.setImageResource(R.mipmap.presence_away);
+//    }
+//    else
+//    {
+//      mFab.setImageResource(R.mipmap.presence_online);
+//    }
+//    mFab.setOnClickListener(new View.OnClickListener()
+//    {
+//      @Override
+//      public void onClick(View view)
+//      {
+//        ImageView imgv = new ImageView(getApplicationContext());
+//        String msg;
+//
+//        if ( mTrialExpired )
+//        {
+//          //Snackbar.make(view, "XRSC Trial period is expired!", Snackbar.LENGTH_LONG)
+//          //        .setAction("Action", null).show();
+//          imgv.setImageResource(R.mipmap.presence_away);
+//          msg = "XRSC Trial period has expired!";
+//        }
+//        else
+//        {
+//          //Snackbar.make(view, "XRSC works fine.", Snackbar.LENGTH_LONG)
+//          //        .setAction("Action", null).show();
+//          imgv.setImageResource(R.mipmap.presence_online);
+//          msg = "XRSC works fine.";
+//        }
+//
+//        Toast toast = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG);
+//        toast.setGravity(Gravity.CENTER, 0, 0);
+//        LinearLayout toastContainer = (LinearLayout)toast.getView();
+//        toastContainer.addView(imgv, 0);
+//        toast.show();
+//      }
+//    });
 
     mClientSwitch = (Switch) findViewById(R.id.idClientSwitch);
     mRoadSignSwitch = (Switch) findViewById(R.id.idRoadSignSwitch);
@@ -205,6 +309,8 @@ public class MainActivity extends AppCompatActivity
     mBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.default_road_sign, mOptions);
 
     mPacket = new RsPacket();
+
+    mStatusDialog = new AppStatusDialog();
 
     addImagesToTheGallery();
 
@@ -356,8 +462,9 @@ public class MainActivity extends AppCompatActivity
 
   public class aClientTask extends AsyncTask<String, String, TCPClient>
   {
-    private String cTag = "ClientTask";
-    private String cServer = null;
+    private String  cTag = "ClientTask";
+    private String  cServer = null;
+    private boolean cClientActive = true;
 
     @Override
     protected TCPClient doInBackground(String... message)
@@ -365,7 +472,7 @@ public class MainActivity extends AppCompatActivity
       publishProgress("Connection...");
 
       // We create a TCPClient object and
-      mTcpClient = new TCPClient(cServer, new TCPClient.OnMessageReceived()
+      mTcpClient = new TCPClient(cServer, cClientActive, new TCPClient.OnMessageReceived()
       {
         @Override
         // Here the messageReceived method is implemented
@@ -410,6 +517,7 @@ public class MainActivity extends AppCompatActivity
       super.onPreExecute();
 
       cServer = getString(R.string.defaultServer);
+      cClientActive = mStatus;
 
       Log.d(cTag, "Do Pre Execute : Server = " + cServer);
     }
@@ -446,6 +554,18 @@ public class MainActivity extends AppCompatActivity
   {
     // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.menu_main, menu);
+
+    mMenuStatus = menu.add(0, 1, 0, "App Status");
+    mMenuStatus.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+    if(mStatus)
+    {
+      mMenuStatus.setIcon(R.mipmap.presence_online);
+    }
+    else
+    {
+      mMenuStatus.setIcon(R.mipmap.presence_away);
+    }
+
     return true;
   }
 
@@ -463,7 +583,32 @@ public class MainActivity extends AppCompatActivity
       return true;
     }
 
+    if(id == 1)
+    {
+      mStatusDialog.setStatus(mStatus);
+      mStatusDialog.show(getFragmentManager(), "StatusDialog");
+      return true;
+    }
+
     return super.onOptionsItemSelected(item);
+  }
+
+  @Override
+  public void onComplete(String password)
+  {
+    Log.d(this.mTag, "Password entered : " + password);
+
+    savePassword(password);
+    mStatus = getStatus();
+
+    if(mStatus)
+    {
+      mMenuStatus.setIcon(R.mipmap.presence_online);
+    }
+    else
+    {
+      mMenuStatus.setIcon(R.mipmap.presence_away);
+    }
   }
 
 

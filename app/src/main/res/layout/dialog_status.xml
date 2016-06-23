@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/textStatusExpired"
+        android:id="@+id/idAppStatusText"
+        android:layout_gravity="center_horizontal"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:ems="15"
+        android:id="@+id/idPasswordText"
+        android:editable="true"
+        android:gravity="center_horizontal"
+        android:maxLength="25"
+        android:maxLines="1"
+        android:minLines="1"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_gravity="center_horizontal"
+        />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/textOK"
+        android:id="@+id/idPasswordButton"
+        android:layout_marginRight="5dp"
+        android:layout_gravity="center_horizontal"/>
+</LinearLayout>

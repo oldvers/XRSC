@@ -14,4 +14,8 @@
     <string name="percentText">30 %</string>
     <string name="textSlideButton">Send as Slide</string>
     <string name="textOffButton">OFF</string>
+    <string name="textAppStatus">App status</string>
+    <string name="textOK">OK</string>
+    <string name="textStatusOk">App is running normally.</string>
+    <string name="textStatusExpired">App trial period expired! Please enter serial number.</string>
 </resources>

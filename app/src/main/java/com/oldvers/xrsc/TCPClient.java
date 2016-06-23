@@ -22,6 +22,7 @@ public class TCPClient
   private OnMessageReceived  mMessageListener = null;
   private boolean            mRun             = false;
   private RsPacket           mPacket;
+  private boolean            mActive          = true;
 
   //private PrintWriter        mOS;
   private OutputStream       mOS;
@@ -30,9 +31,10 @@ public class TCPClient
   /**
    *  Constructor of the class. OnMessagedReceived listens for the messages received from server
    */
-  public TCPClient(String aServer, OnMessageReceived aListener)
+  public TCPClient(String aServer, boolean aActivity, OnMessageReceived aListener)
   {
     mServer = aServer;
+    mActive = aActivity;
     mMessageListener = aListener;
   }
 
@@ -60,7 +62,7 @@ public class TCPClient
 
     Log.d("TCP Client", "Sending raw data");
 
-    if(mOS != null) // && !mOS.checkError())
+    if ( (mOS != null) && (mActive) )
     {
       try
       {
@@ -142,7 +144,8 @@ public class TCPClient
             Log.d("TCP Client", "Reading...");
 
             //mServerMessage = mIS.readLine();
-            if(!sendRaw(mPacket.getStatus())) throw new IOException("Socket unavailable");
+            //if(!sendRaw(mPacket.getStatus())) throw new IOException("Socket unavailable");
+            if (mOS != null) mOS.write(mPacket.getStatus());
 
             mSocket.getInputStream().read();
 
